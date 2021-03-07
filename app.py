@@ -20,10 +20,18 @@ def get_credits(df):
 def plot_credits(df):
     sns.set_theme(style="darkgrid")
     # fig, ax = plt.subplots(figsize=(20, 10))
-    fig = sns.lineplot(x="position", y="creditos",
-                       hue="situacao",
-                       data=df)
+    fig = sns.barplot(x="position", y="creditos",
+                      hue="situacao",
+                      data=df)
     return fig.get_figure()
+
+
+def discipline_reproved(df):
+    df_reproveded = df[df['situacao'] == 'Reprovado']
+    df_reproveded = df_reproveded.groupby(
+        ['disciplina'], as_index=False).count()
+    df_reproveded['reprovacoes'] = df_reproveded['periodo']
+    return df_reproveded[['disciplina', 'reprovacoes']]
 
 
 if __name__ == '__main__':
@@ -36,9 +44,9 @@ if __name__ == '__main__':
         df_credit = get_credits(df)
         df_position_sum = df_credit.groupby(['position'], as_index=False)[
             'creditos'].sum()
+
+        st.dataframe(discipline_reproved(df))
         st.text(f'Máximo de créditos: {df_position_sum["creditos"].max()}')
-        st.dataframe(df)
-        st.dataframe(df_credit)
         st.pyplot(plot_credits(df_credit))
     else:
         st.text('Insira seus dados...')
