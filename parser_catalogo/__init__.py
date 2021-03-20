@@ -24,6 +24,4 @@ def filter_subjects(df_catalogo, subject_values):
             df_edit = df_catalogo.loc[[((subject_value in x))
                                        for x in df_catalogo['Cursos/Categoria']]].reset_index(drop=True)
             df = df.append(df_edit)
-    # print(df)
-    # todo = todo[~todo['Sigla'].isin(df_personal['codigo'])]
     return df
