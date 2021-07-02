@@ -1,7 +1,9 @@
+from matplotlib.pyplot import axis
 import streamlit as st
 import pandas as pd
 # import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly.express as px
 
 from parser_catalogo import get_info_catalogo, filter_subjects
 
@@ -15,17 +17,48 @@ def get_credits(df):
     df_credit = df.groupby(['ano', 'periodo', 'situacao'], as_index=False)[
         'creditos'].sum()
     df_credit['position'] = df_credit['ano'].astype(
-        str)+'.'+df_credit['periodo'].astype(str)
+        str)+'-'+df_credit['periodo'].astype(str).str.zfill(2)
     return df_credit
+
+
+def calculator_cr(df):
+    notes = {'A': 4, 'B': 3, 'C': 2, 'D': 1, 'F': 0, 'O': 0}
+    df_cr = df.loc[~df['conceito'].isin(['E', '-'])]
+    df_cr['conceito_num'] = df_cr.apply(
+        lambda x: notes.get(x['conceito']), axis=1)
+    df_cr['parameter_cr'] = df_cr['conceito_num'] * df_cr['creditos']
+    return (df_cr['parameter_cr'].sum()/df_cr['creditos'].sum())
+
+
+def calculator_ca(df):
+    notes = {'A': 4, 'B': 3, 'C': 2, 'D': 1, 'F': 0, 'O': 0}
+    df_ca = df.loc[~df['conceito'].isin(['E', '-'])]
+    df_ca['conceito_num'] = df_ca.apply(
+        lambda x: notes.get(x['conceito']), axis=1)
+    df_ca = df_ca.groupby(['disciplina', 'creditos'], as_index=False)[
+        'conceito_num'].max()
+    df_ca['parameter_cr'] = df_ca['conceito_num'] * df_ca['creditos']
+    return (df_ca['parameter_cr'].sum()/df_ca['creditos'].sum())
 
 
 def plot_credits(df):
     sns.set_theme(style="darkgrid")
-    # fig, ax = plt.subplots(figsize=(20, 10))
-    fig = sns.barplot(x="position", y="creditos",
-                      hue="situacao",
-                      data=df)
-    return fig.get_figure()
+
+    fig = px.bar(
+        df,
+        x="position",
+        y="creditos",
+        color="situacao",
+        category_orders={
+            "situacao": ["Aprovado", "Apr.S.Nota", "Disc.Equiv", "Reprovado", "Repr.Freq'"]
+        },
+        color_discrete_map={
+            'Apr.S.Nota': 'green',
+            'Reprovado': 'red',
+            'Disc.Equiv': 'green', 'Aprovado': 'green', 'Repr.Freq': 'red'},
+        title="Test"
+    )
+    return fig
 
 
 def discipline_reproved(df):
@@ -62,10 +95,12 @@ if __name__ == '__main__':
         df_credit = get_credits(df_user)
         df_position_sum = df_credit.groupby(['position'], as_index=False)[
             'creditos'].sum()
-
+        df_position_sum.sort_values(by='position', inplace=True)
         st.dataframe(discipline_reproved(df_user))
         st.text(f'Máximo de créditos: {df_position_sum["creditos"].max()}')
-        st.pyplot(plot_credits(df_credit))
+        st.text(f'CR: {calculator_cr(df_user):.3f}')
+        st.text(f'CA: {calculator_ca(df_user):.3f}')
+        st.plotly_chart(plot_credits(df_credit), use_container_width=True)
         st.dataframe(
             df_subjects[~df_subjects['Sigla'].isin(df_user.loc[~df_user['situacao'].isin(['Repr.Freq', 'Reprovado'])]['codigo'])][['Disciplina', 'TPI']].reset_index(drop=True))
     else:
