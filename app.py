@@ -1,3 +1,4 @@
+from matplotlib.pyplot import axis
 import streamlit as st
 import pandas as pd
 # import matplotlib.pyplot as plt
@@ -21,7 +22,23 @@ def get_credits(df):
 
 
 def calculator_cr(df):
-    notes = {}
+    notes = {'A': 4, 'B': 3, 'C': 2, 'D': 1, 'F': 0, 'O': 0}
+    df_cr = df.loc[~df['conceito'].isin(['E', '-'])]
+    df_cr['conceito_num'] = df_cr.apply(
+        lambda x: notes.get(x['conceito']), axis=1)
+    df_cr['parameter_cr'] = df_cr['conceito_num'] * df_cr['creditos']
+    return (df_cr['parameter_cr'].sum()/df_cr['creditos'].sum())
+
+
+def calculator_ca(df):
+    notes = {'A': 4, 'B': 3, 'C': 2, 'D': 1, 'F': 0, 'O': 0}
+    df_ca = df.loc[~df['conceito'].isin(['E', '-'])]
+    df_ca['conceito_num'] = df_ca.apply(
+        lambda x: notes.get(x['conceito']), axis=1)
+    df_ca = df_ca.groupby(['disciplina', 'creditos'], as_index=False)[
+        'conceito_num'].max()
+    df_ca['parameter_cr'] = df_ca['conceito_num'] * df_ca['creditos']
+    return (df_ca['parameter_cr'].sum()/df_ca['creditos'].sum())
 
 
 def plot_credits(df):
@@ -81,6 +98,8 @@ if __name__ == '__main__':
         df_position_sum.sort_values(by='position', inplace=True)
         st.dataframe(discipline_reproved(df_user))
         st.text(f'Máximo de créditos: {df_position_sum["creditos"].max()}')
+        st.text(f'CR: {calculator_cr(df_user):.3f}')
+        st.text(f'CA: {calculator_ca(df_user):.3f}')
         st.plotly_chart(plot_credits(df_credit), use_container_width=True)
         st.dataframe(
             df_subjects[~df_subjects['Sigla'].isin(df_user.loc[~df_user['situacao'].isin(['Repr.Freq', 'Reprovado'])]['codigo'])][['Disciplina', 'TPI']].reset_index(drop=True))
