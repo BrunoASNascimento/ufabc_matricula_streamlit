@@ -1,8 +1,5 @@
-from matplotlib.pyplot import axis
 import streamlit as st
 import pandas as pd
-# import matplotlib.pyplot as plt
-import seaborn as sns
 import plotly.express as px
 
 from parser_catalogo import get_info_catalogo, filter_subjects
@@ -42,7 +39,6 @@ def calculator_ca(df):
 
 
 def plot_credits(df):
-    sns.set_theme(style="darkgrid")
 
     fig = px.bar(
         df,

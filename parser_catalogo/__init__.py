@@ -1,5 +1,4 @@
 import pandas as pd
-from streamlit.proto.DataFrame_pb2 import DataFrame
 
 
 def get_info_catalogo(PATH):
